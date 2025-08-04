@@ -13,19 +13,20 @@ d3.csv("data/spotify.csv").then(data => {
 
     const total = d3.sum(pieData, d => d.count);
 
-    const width = 700, height = 600, radius = Math.min(width, height) / 2;
+    const width = 700, height = 600;
+    const radius = Math.min(width, height) / 2 - 100;
 
     const svg = d3.select("#pieChart")
         .append("svg")
         .attr("width", width)
         .attr("height", height)
         .append("g")
-        .attr("transform", `translate(${width / 2},${height / 2})`);
+        .attr("transform", `translate(${width / 2 + 40},${height / 2})`);
 
     // Add chart title
     svg.append("text")
-        .attr("x", 0)
-        .attr("y", -(height / 2) + 30)
+        .attr("x", -40)
+        .attr("y", -(height / 2) + 40)
         .attr("text-anchor", "middle")
         .style("font-size", "18px")
         .style("font-weight", "bold")
@@ -40,7 +41,8 @@ d3.csv("data/spotify.csv").then(data => {
         .attr("rx", 30)
         .attr("fill", "white");
 
-    const tooltip = d3.select("#pieChart")
+    // Add Tooltip to body
+    const tooltip = d3.select("body")
         .append("div")
         .attr("class", "tooltip")
         .style("position", "absolute")
@@ -49,7 +51,9 @@ d3.csv("data/spotify.csv").then(data => {
         .style("padding", "8px")
         .style("border", "1px solid #ccc")
         .style("border-radius", "4px")
-        .style("font-size", "12px");
+        .style("font-size", "12px")
+        .style("color", "#000")
+        .style("z-index", "1000");
 
     const color = d3.scaleOrdinal()
         .domain(pieData.map(d => d.artist))
@@ -61,7 +65,7 @@ d3.csv("data/spotify.csv").then(data => {
 
     const arc = d3.arc()
         .innerRadius(0)
-        .outerRadius(radius - 10);
+        .outerRadius(radius);
 
     svg.selectAll("path")
         .data(pie(pieData))
@@ -77,8 +81,9 @@ d3.csv("data/spotify.csv").then(data => {
             d3.select(this).transition().duration(200).style("opacity", 1);
         })
         .on("mousemove", function(event) {
-            tooltip.style("top", (event.pageY - 10) + "px")
-                   .style("left", (event.pageX + 10) + "px");
+            tooltip
+                .style("top", (event.pageY - 10) + "px")
+                .style("left", (event.pageX + 10) + "px");
         })
         .on("mouseout", function() {
             tooltip.style("visibility", "hidden");
@@ -91,9 +96,21 @@ d3.csv("data/spotify.csv").then(data => {
             return t => arc(i(t));
         });
 
-    // Legend group, positioned top-left corner inside svg
+    // Add Percent Tags
+    svg.selectAll("text.percent")
+        .data(pie(pieData))
+        .enter()
+        .append("text")
+        .attr("class", "percent")
+        .attr("transform", d => `translate(${arc.centroid(d)})`)
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "middle")
+        .style("font-size", "11px")
+        .style("fill", "#000")
+        .text(d => `${((d.data.count / total) * 100).toFixed(1)}%`);
+
     const legend = svg.append("g")
-        .attr("transform", `translate(${-(width / 2) + 20},${-(height / 2) + 60})`); // pushed down 60px to avoid title
+        .attr("transform", `translate(${-(width / 2) + 20 - 40},${-(height / 2) + 60})`);
 
     pieData.forEach((d, i) => {
         const row = legend.append("g")
